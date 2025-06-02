@@ -1,0 +1,66 @@
+#suika-game {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  gap: 32px;
+  color: white;
+}
+
+.suika-left {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  width: 45%;
+  height: 100%;
+  box-sizing: border-box;
+}
+
+.suika-right {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 55%;
+  height: 100%;
+}
+
+.suika-header {
+  font-size: 60px;
+  margin-bottom: 16px;
+  color: #fee300;
+  text-shadow: -3px -3px #f98628, 3px -3px #f98628, -3px 3px #f98628,
+    3px 3px #f98628;
+}
+
+.suika-top {
+  display: flex;
+  gap: 16px;
+  width: 100%;
+  margin-bottom: 16px;
+}
+
+.suika-top .info-box {
+  flex: 1;
+}
+
+.info-box {
+  border: 10px solid #046db3;
+  background-color: #0a111b;
+  padding: 16px;
+  min-height: 80px;
+  font-size: 20px;
+  border-radius: 8px;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+#rule-box {
+  width: 100%;
+  min-height: 160px;
+}
+
+#game-area {
+  width: 420px;
+  height: 540px;
+  border: 10px solid #046db3;
+  background-color: #0a111b;
+}
