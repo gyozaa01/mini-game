@@ -58,6 +58,54 @@
   min-height: 160px;
 }
 
+.rule-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 16px;
+  gap: 20%;
+}
+
+.fruit-ring {
+  position: relative;
+  width: 200px;
+  height: 200px;
+}
+
+.fruit-ring img {
+  position: absolute;
+  width: 32px;
+  height: 32px;
+  transform: translate(-50%, -50%);
+}
+
+.fruit-ring::before {
+  content: "->";
+  position: absolute;
+  top: -10%;
+  left: 80%;
+  font-size: 20px;
+  color: white;
+}
+
+.rule-desc {
+  font-size: 14px;
+  margin-left: 24px;
+  color: white;
+}
+
+.rule-desc ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  text-align: left;
+}
+
+.rule-desc li {
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+
 #game-area {
   width: 420px;
   height: 540px;
