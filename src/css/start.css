@@ -1,0 +1,33 @@
+#start-screen {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
+
+.title {
+  font-size: 100px;
+  color: #fee300;
+  text-shadow: -3px -3px #f98628, 3px -3px #f98628, -3px 3px #f98628,
+    3px 3px #f98628;
+  margin-bottom: 10%;
+}
+
+.start-button {
+  font-family: "Galmuri11", sans-serif;
+  font-size: 50px;
+  padding: 16px 40px;
+  background: transparent;
+  border: 2px solid white;
+  border-radius: 20px;
+  color: white;
+  cursor: pointer;
+  text-shadow: 1px 1px #000;
+}
+
+.start-button:hover {
+  background: white;
+  color: black;
+}
