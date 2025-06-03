@@ -27,6 +27,36 @@ export function createSuikaGameScreen() {
     </div>
   `;
 
+  const FRUITS = [
+    { name: "00_cherry", radius: 16 },
+    { name: "01_strawberry", radius: 24 },
+    { name: "02_grape", radius: 30 },
+    { name: "03_gyool", radius: 34 },
+    { name: "04_orange", radius: 44 },
+    { name: "05_apple", radius: 57 },
+    { name: "06_pear", radius: 64 },
+    { name: "07_peach", radius: 78 },
+    { name: "08_pineapple", radius: 88 },
+    { name: "09_melon", radius: 110 },
+    { name: "10_watermelon", radius: 130 },
+  ];
+
+  // 다음에 생성할 과일의 인덱스를 미리 뽑아둠
+  let nextIndex = Math.floor(Math.random() * 5); // 0~4 중 하나
+
+  // “다음” 박스에 <img> 요소 추가해서 현재 nextIndex에 해당하는 과일 이미지를 띄움
+  const nextFruitBox = container.querySelector("#next-fruit");
+
+  // 텍스트 '다음' 아래에 들어갈 img 태그 생성
+  const nextImg = document.createElement("img");
+  nextImg.style.display = "block";
+  nextImg.style.width = "40px"; // 크기는 필요에 따라 조정
+  nextImg.style.height = "40px";
+  nextImg.style.margin = "4px auto 0"; // 상단 여백, 가운데 정렬
+  nextImg.src = `/suika/${FRUITS[nextIndex].name}.png`;
+  nextImg.alt = FRUITS[nextIndex].name;
+  nextFruitBox.appendChild(nextImg);
+
   const ruleBox = container.querySelector("#rule-box");
 
   const fruits = [
@@ -95,20 +125,6 @@ export function createSuikaGameScreen() {
     },
   });
 
-  const FRUITS = [
-    { name: "00_cherry", radius: 16 },
-    { name: "01_strawberry", radius: 24 },
-    { name: "02_grape", radius: 30 },
-    { name: "03_gyool", radius: 34 },
-    { name: "04_orange", radius: 44 },
-    { name: "05_apple", radius: 57 },
-    { name: "06_pear", radius: 64 },
-    { name: "07_peach", radius: 78 },
-    { name: "08_pineapple", radius: 88 },
-    { name: "09_melon", radius: 110 },
-    { name: "10_watermelon", radius: 130 },
-  ];
-
   const wallThickness = 10;
   const world = engine.world;
 
@@ -148,9 +164,15 @@ export function createSuikaGameScreen() {
   let fruitQueued = false;
   let spawnTimer = null;
 
+  function updateNextFruitDisplay() {
+    // nextIndex가 바뀔 때마다 이미지를 갱신
+    nextImg.src = `/suika/${FRUITS[nextIndex].name}.png`;
+    nextImg.alt = FRUITS[nextIndex].name;
+  }
+
   function addFruit() {
-    const index = Math.floor(Math.random() * 5);
-    const fruit = FRUITS[index];
+    // 현재 생성할 과일은 nextIndex를 사용
+    const fruit = FRUITS[nextIndex];
     const spawnY = 60;
 
     // 현재 필드에서 가장 위에 있는 과일의 꼭대기 위치 계산
@@ -171,7 +193,7 @@ export function createSuikaGameScreen() {
     // 과일 생성
     const body = Bodies.circle(210, spawnY, fruit.radius, {
       isSleeping: true,
-      index,
+      index: nextIndex,
       render: { sprite: { texture: `/suika/${fruit.name}.png` } },
       restitution: 0.3,
     });
@@ -180,6 +202,10 @@ export function createSuikaGameScreen() {
     currentFruit = fruit;
     World.add(world, body);
     disableAction = false;
+
+    // “다음” 과일을 미리 뽑고, 화면도 갱신
+    nextIndex = Math.floor(Math.random() * 5);
+    updateNextFruitDisplay();
   }
 
   window.onkeydown = (event) => {
