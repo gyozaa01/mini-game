@@ -12,6 +12,7 @@
     "vite": "^6.3.5"
   },
   "dependencies": {
-    "galmuri": "^2.39.9"
+    "galmuri": "^2.39.9",
+    "matter-js": "^0.20.0"
   }
 }

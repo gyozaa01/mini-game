@@ -1,3 +1,5 @@
+import { Engine, Render, Runner, World, Bodies, Body, Events } from "matter-js";
+
 export function createSuikaGameScreen() {
   const container = document.createElement("div");
   container.id = "suika-game";
@@ -19,7 +21,7 @@ export function createSuikaGameScreen() {
 
       <div class="suika-right">
         <div id="game-area">
-          <canvas id="game-canvas" width="360" height="480"></canvas>
+          <canvas id="game-canvas"></canvas>
         </div>
       </div>
     </div>
@@ -77,5 +79,230 @@ export function createSuikaGameScreen() {
   ruleContent.appendChild(desc);
   ruleBox.appendChild(ruleContent);
 
+  const canvas = container.querySelector("#game-canvas");
+  canvas.width = 420;
+  canvas.height = 540;
+
+  const engine = Engine.create();
+  const render = Render.create({
+    engine,
+    canvas,
+    options: {
+      wireframes: false,
+      background: "#0a111b",
+      width: 420,
+      height: 540,
+    },
+  });
+
+  const FRUITS = [
+    { name: "00_cherry", radius: 16 },
+    { name: "01_strawberry", radius: 24 },
+    { name: "02_grape", radius: 30 },
+    { name: "03_gyool", radius: 34 },
+    { name: "04_orange", radius: 44 },
+    { name: "05_apple", radius: 57 },
+    { name: "06_pear", radius: 64 },
+    { name: "07_peach", radius: 78 },
+    { name: "08_pineapple", radius: 88 },
+    { name: "09_melon", radius: 110 },
+    { name: "10_watermelon", radius: 130 },
+  ];
+
+  const wallThickness = 10;
+  const world = engine.world;
+
+  const leftWall = Bodies.rectangle(5, 270, wallThickness, 540, {
+    isStatic: true,
+    render: { fillStyle: "#046db3" },
+  });
+
+  const rightWall = Bodies.rectangle(415, 270, wallThickness, 540, {
+    isStatic: true,
+    render: { fillStyle: "#046db3" },
+  });
+
+  const ground = Bodies.rectangle(210, 535, 400, wallThickness, {
+    isStatic: true,
+    render: { fillStyle: "#046db3" },
+  });
+
+  const positionLine = Bodies.rectangle(210, 270, 0.5, 540, {
+    name: "positionLine",
+    isStatic: true,
+    isSensor: true,
+    render: { fillStyle: "#046db3" },
+  });
+
+  World.add(world, [leftWall, rightWall, ground, positionLine]);
+
+  Render.run(render);
+  Runner.run(Runner.create(), engine);
+
+  let currentBody = null;
+  let currentFruit = null;
+  let interval = null;
+  let disableAction = false;
+  let suikaCount = 0;
+  let fallingBody = null;
+  let fruitQueued = false;
+  let spawnTimer = null;
+
+  function addFruit() {
+    const index = Math.floor(Math.random() * 5);
+    const fruit = FRUITS[index];
+    const spawnY = 60;
+
+    // 현재 필드에서 가장 위에 있는 과일의 꼭대기 위치 계산
+    const highest = world.bodies
+      .filter((b) => !b.isStatic && !b.isSensor && b.circleRadius)
+      .reduce((min, b) => {
+        const top = b.position.y - b.circleRadius;
+        return top < min ? top : min;
+      }, Infinity);
+
+    // 가장 위 과일이 천장을 넘었으면 Game Over
+    if (highest <= 0) {
+      alert("💥 Game Over");
+      location.reload();
+      return;
+    }
+
+    // 과일 생성
+    const body = Bodies.circle(210, spawnY, fruit.radius, {
+      isSleeping: true,
+      index,
+      render: { sprite: { texture: `/suika/${fruit.name}.png` } },
+      restitution: 0.3,
+    });
+
+    currentBody = body;
+    currentFruit = fruit;
+    World.add(world, body);
+    disableAction = false;
+  }
+
+  window.onkeydown = (event) => {
+    if (disableAction) return;
+    switch (event.code) {
+      case "ArrowLeft":
+        if (interval) return;
+        interval = setInterval(() => {
+          if (!currentBody || !currentFruit) return;
+          if (currentBody.position.x - currentFruit.radius > 20) {
+            Body.setPosition(currentBody, {
+              x: currentBody.position.x - 1,
+              y: currentBody.position.y,
+            });
+            Body.setPosition(positionLine, {
+              x: currentBody.position.x - 1,
+              y: positionLine.position.y,
+            });
+          }
+        }, 5);
+        break;
+
+      case "ArrowRight":
+        if (interval) return;
+
+        interval = setInterval(() => {
+          if (!currentBody || !currentFruit) return;
+          if (currentBody.position.x + currentFruit.radius < 400) {
+            Body.setPosition(currentBody, {
+              x: currentBody.position.x + 1,
+              y: currentBody.position.y,
+            });
+            Body.setPosition(positionLine, {
+              x: currentBody.position.x + 1,
+              y: positionLine.position.y,
+            });
+          }
+        }, 5);
+        break;
+
+      case "ArrowDown":
+        currentBody.isSleeping = false;
+        fallingBody = currentBody;
+        currentBody = null;
+        disableAction = true;
+        fruitQueued = true;
+
+        if (interval) clearInterval(interval);
+        if (spawnTimer) clearTimeout(spawnTimer);
+
+        spawnTimer = setTimeout(() => {
+          if (fruitQueued && fallingBody) {
+            addFruit();
+            fallingBody = null;
+            fruitQueued = false;
+          }
+        }, 1500);
+        break;
+    }
+  };
+
+  window.onkeyup = (event) => {
+    if (["ArrowLeft", "ArrowRight"].includes(event.code)) {
+      clearInterval(interval);
+      interval = null;
+    }
+  };
+
+  Events.on(engine, "collisionStart", (event) => {
+    const merged = new Set();
+    event.pairs.forEach((collision) => {
+      const a = collision.bodyA;
+      const b = collision.bodyB;
+
+      if (a.index === b.index && a.index !== undefined) {
+        if (merged.has(a) || merged.has(b)) return;
+        if (a.index === FRUITS.length - 1) return;
+
+        merged.add(a);
+        merged.add(b);
+        World.remove(world, [a, b]);
+
+        const newFruit = FRUITS[a.index + 1];
+        const newBody = Bodies.circle(
+          collision.collision.supports[0].x,
+          collision.collision.supports[0].y,
+          newFruit.radius,
+          {
+            render: { sprite: { texture: `/suika/${newFruit.name}.png` } },
+            index: a.index + 1,
+          }
+        );
+        World.add(world, newBody);
+
+        if (a.index + 1 === FRUITS.length - 1) {
+          suikaCount++;
+          if (suikaCount >= 2) {
+            setTimeout(() => alert("WIN! 수박 2개 완성!"), 300);
+          }
+        }
+      }
+    });
+  });
+
+  Events.on(engine, "afterUpdate", () => {
+    if (
+      fallingBody &&
+      fallingBody.speed < 0.5 &&
+      Math.abs(fallingBody.velocity.y) < 0.3 &&
+      !fallingBody.isStatic &&
+      fruitQueued
+    ) {
+      addFruit();
+      fallingBody = null;
+      fruitQueued = false;
+
+      if (spawnTimer) {
+        clearTimeout(spawnTimer);
+        spawnTimer = null;
+      }
+    }
+  });
+
+  addFruit();
   return container;
 }
