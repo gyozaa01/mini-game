@@ -1,4 +1,4 @@
-export function createStartScreen(onStart) {
+export function createStartScreen() {
   const container = document.createElement("div");
   container.id = "start-screen";
   container.innerHTML = `
@@ -6,6 +6,10 @@ export function createStartScreen(onStart) {
     <button class="start-button">START</button>
   `;
 
-  container.querySelector("button").addEventListener("click", onStart);
+  // START 버튼 클릭 시 해시를 "/mode"로 변경
+  container.querySelector("button").addEventListener("click", () => {
+    location.hash = "/mode";
+  });
+
   return container;
 }
