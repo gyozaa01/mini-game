@@ -12,7 +12,7 @@ export function createSuikaGameScreen() {
         <div class="suika-top">
           <div class="info-box" id="score-board">
             <div>점수</div>
-            <div id="score-value">0</div>
+            <div class="score-value">0</div>
           </div>
           <div class="info-box" id="next-fruit">다음</div>
         </div>
@@ -47,7 +47,7 @@ export function createSuikaGameScreen() {
   // 점수 초기화
   let score = 0;
   // 점수를 보여줄 DOM 요소
-  const scoreBoard = container.querySelector("#score-board");
+  const scoreValueElem = container.querySelector(".score-value");
 
   // 다음에 생성할 과일의 인덱스를 미리 뽑아둠 (0~4 중 하나)
   let nextIndex = Math.floor(Math.random() * 5);
@@ -359,7 +359,7 @@ export function createSuikaGameScreen() {
           // 새 과일 단계(newIndex)를 기준으로 점수 계산
           const newIndex = a.index + 1;
           score += newIndex * 10;
-          scoreBoard.innerText = `점수: ${score}`;
+          scoreValueElem.innerText = score;
         }
         // merge 처리 후에는 더 이상 다른 로직을 실행하지 않도록 return
         return;
