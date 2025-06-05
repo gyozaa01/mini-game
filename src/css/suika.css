@@ -42,6 +42,10 @@
   flex: 1;
 }
 
+#score-value {
+  margin-top: 7%;
+}
+
 .info-box {
   border: 10px solid #046db3;
   background-color: #0a111b;
