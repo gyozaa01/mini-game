@@ -114,6 +114,9 @@ export function createSuikaGameScreen() {
   canvas.height = 540;
 
   const engine = Engine.create();
+  engine.positionIterations = 10;
+  engine.velocityIterations = 10;
+
   const render = Render.create({
     engine,
     canvas,
@@ -161,10 +164,10 @@ export function createSuikaGameScreen() {
   let currentFruit = null; // 지금 화면에 떠 있는 과일의 정보({name, radius})
   let interval = null; // 좌/우 이동용 setInterval ID
   let disableAction = false; // ↓키를 눌러 과일을 떨어뜨린 직후엔 좌/우 금지
-  let suikaCount = 0; // 만든 수박 개수 카운터 (과일 합친 뒤 수박이 되면 +1)
   let fallingBody = null; // ↓누른 후 “떨어지는 중인” 과일 body
   let fruitQueued = false; // “떨어지는 과일이 있으면” true
   let spawnedThisDrop = false; // “한 번 떨어뜨린 과일당 한 번만 next 과일 스폰” 플래그
+  let spawnTimer = null; // 타임아웃 ID (fallback으로 addFruit 호출)
 
   function updateNextFruitDisplay() {
     nextImg.src = `/suika/${FRUITS[nextIndex].name}.png`;
@@ -172,17 +175,11 @@ export function createSuikaGameScreen() {
   }
 
   function addFruit() {
-    // (1) 화면에 새 과일을 하나 spawn
-    const fruit = FRUITS[nextIndex];
-    const spawnY = 60;
-
-    // (2) 천장(위 벽) 체크: 과일 탑 위치 계산
-    // : b.position.y - b.circleRadius 가 과일 최상단 y 좌표
     const highest = world.bodies
       .filter((b) => !b.isStatic && !b.isSensor && b.circleRadius)
       .reduce((min, b) => {
-        const top = b.position.y - b.circleRadius;
-        return top < min ? top : min;
+        const topY = b.position.y - b.circleRadius;
+        return topY < min ? topY : min;
       }, Infinity);
 
     // “최상단 과일(top) < 0” 이면 과일이 벽을 침범한 상태 -> Game Over
@@ -192,29 +189,34 @@ export function createSuikaGameScreen() {
       return;
     }
 
-    // (3) 과일 생성
+    // — (2) 과일 Body 생성 —
+    const fruit = FRUITS[nextIndex];
+    const spawnY = 60;
+
     const body = Bodies.circle(210, spawnY, fruit.radius, {
       isSleeping: true,
       index: nextIndex,
+      restitution: 0.1, // 튕김을 줄여서 틈새로 빠지는 현상 완화
+      friction: 0.2, // 바닥에 붙도록 약간 마찰 추가
       render: { sprite: { texture: `/suika/${fruit.name}.png` } },
-      restitution: 0.3,
     });
 
     currentBody = body;
     currentFruit = fruit;
     World.add(world, body);
 
-    // (4) 새 과일이 추가된 뒤엔 좌/우 조작 허용
+    // 과일이 화면에 새로 생긴 뒤엔 좌/우 조작 허용
     disableAction = false;
 
-    // (5) 다음 과일 미리 뽑기
+    // 다음 과일 미리 뽑기
     nextIndex = Math.floor(Math.random() * 5);
     updateNextFruitDisplay();
   }
 
-  //————————————————————————————
-  // 키 입력 처리: 좌/우 + ↓
-  //————————————————————————————
+  // 최초 과일 하나는 바로 스폰
+  addFruit();
+
+  // 2) 키 입력 처리: ←/→ 이동 + ↓키 누르면 떨어뜨리기
   window.onkeydown = (event) => {
     // ↓키(ArrowDown) 누르면 ‘무조건’ 현재 과일을 떨군다
     if (event.code === "ArrowDown") {
@@ -227,24 +229,34 @@ export function createSuikaGameScreen() {
         currentBody.isSleeping = false;
         fallingBody = currentBody;
         currentBody = null;
-        disableAction = true; // 떨어지는 동안 좌/우 금지
-        fruitQueued = true; // 떨어지는 과일이 있음 표시
-      }
+        currentFruit = null;
+        disableAction = true;
+        fruitQueued = true;
 
-      // 이동용 interval 있으면 해제
-      if (interval) {
-        clearInterval(interval);
-        interval = null;
+        if (spawnTimer) clearTimeout(spawnTimer);
+        spawnTimer = setTimeout(() => {
+          if (fruitQueued && !spawnedThisDrop) {
+            // collisionStart 없이 완전히 멈춘 것으로 간주하고 스폰
+            spawnedThisDrop = true;
+            disableAction = false;
+            addFruit();
+            fallingBody = null;
+            fruitQueued = false;
+          }
+          spawnTimer = null;
+        }, 1000);
+
+        // 이동 중이던 좌/우 interval이 있으면 정리
+        if (interval) {
+          clearInterval(interval);
+          interval = null;
+        }
       }
       return;
     }
 
-    // ↓키가 아닐 때: 과일 낙하 중이라면(= disableAction=true) 무시
-    if (disableAction) {
-      return;
-    }
+    if (disableAction) return;
 
-    // 좌/우 키 눌렀을 때: 실시간으로 과일 위치만 옮겨 준다
     switch (event.code) {
       case "ArrowLeft":
         if (interval) return;
@@ -305,42 +317,36 @@ export function createSuikaGameScreen() {
       const b = collision.bodyB;
 
       // (1) 과일끼리 merge 로직
-      if (a.index === b.index && a.index !== undefined) {
-        // 동일 인덱스 과일끼리만 합치기
+      if (
+        a.index !== undefined &&
+        a.index === b.index &&
+        a.index !== FRUITS.length - 1
+      ) {
+        // 동일 인덱스 과일 2개 만나면 합치기
         const merged = new Set();
         if (!merged.has(a) && !merged.has(b)) {
-          if (a.index !== FRUITS.length - 1) {
-            merged.add(a);
-            merged.add(b);
-            World.remove(world, [a, b]);
+          merged.add(a);
+          merged.add(b);
+          World.remove(world, [a, b]);
 
-            const newFruit = FRUITS[a.index + 1];
-            const newBody = Bodies.circle(
-              collision.collision.supports[0].x,
-              collision.collision.supports[0].y,
-              newFruit.radius,
-              {
-                render: { sprite: { texture: `/suika/${newFruit.name}.png` } },
-                index: a.index + 1,
-                restitution: 0.3,
-              }
-            );
-            World.add(world, newBody);
-
-            // 합쳐진 과일을 다시 “떨어지는 과일”로 지정
-            fallingBody = newBody;
-            fruitQueued = true;
-            disableAction = false; // 합친 뒤엔 좌/우 조작 허용
-            // spawnedThisDrop는 false 상태 그대로 둠
-
-            // ‘수박이 되어’ 승리 카운트 증가
-            if (a.index + 1 === FRUITS.length - 1) {
-              suikaCount++;
-              if (suikaCount >= 2) {
-                setTimeout(() => alert("WIN! 수박 2개 완성!"), 300);
-              }
+          const newFruit = FRUITS[a.index + 1];
+          const newBody = Bodies.circle(
+            collision.collision.supports[0].x,
+            collision.collision.supports[0].y,
+            newFruit.radius,
+            {
+              render: { sprite: { texture: `/suika/${newFruit.name}.png` } },
+              index: a.index + 1,
+              restitution: 0.1,
+              friction: 0.1,
             }
-          }
+          );
+          World.add(world, newBody);
+
+          // 합쳐진 과일을 다시 “떨어지는 과일”로 지정
+          fallingBody = newBody;
+          fruitQueued = true;
+          disableAction = false; // 합친 뒤엔 좌/우 조작 허용
         }
         // merge 처리 후에는 더 이상 다른 로직을 실행하지 않도록 return
         return;
@@ -361,6 +367,11 @@ export function createSuikaGameScreen() {
           spawnedThisDrop = true; // 이 낙하 드롭당 한 번만 처리
           disableAction = false; // 바닥 닿았으니 좌/우 허용
 
+          // 충돌로 next 과일 스폰
+          if (spawnTimer) {
+            clearTimeout(spawnTimer);
+            spawnTimer = null;
+          }
           addFruit();
           fallingBody = null;
           fruitQueued = false;
@@ -375,6 +386,10 @@ export function createSuikaGameScreen() {
           spawnedThisDrop = true;
           disableAction = false; // 다른 과일과 붙었으니 좌/우 허용
 
+          if (spawnTimer) {
+            clearTimeout(spawnTimer);
+            spawnTimer = null;
+          }
           addFruit();
           fallingBody = null;
           fruitQueued = false;
@@ -383,27 +398,5 @@ export function createSuikaGameScreen() {
       }
     });
   });
-
-  //————————————————————————————
-  // afterUpdate: “충돌 없이 과일이 멈춰 버린” 경우 대응
-  //   -> collisionStart가 트리거되지 않아서 spawnedThisDrop가 뚫려 있을 때
-  //   -> 속도가 충분히 낮으면(= 과일이 완전히 멈춰 있으면) next 과일 호출
-  //————————————————————————————
-  Events.on(engine, "afterUpdate", () => {
-    if (fallingBody && fruitQueued && !spawnedThisDrop) {
-      // 속도가 낮으면(= 멈춘 상태로 간주)
-      if (fallingBody.speed < 0.5) {
-        spawnedThisDrop = true;
-        disableAction = false;
-
-        addFruit();
-        fallingBody = null;
-        fruitQueued = false;
-      }
-    }
-  });
-
-  // 최초 과일 1개 스폰
-  addFruit();
   return container;
 }
