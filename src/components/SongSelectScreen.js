@@ -4,9 +4,9 @@ export function createSongSelectScreen(onBack, onSelectSong) {
   container.innerHTML = `
     <div class="title">SELECT SONG</div>
     <ul class="song-list">
-      <li data-song="1">노래제목1</li>
-      <li data-song="2">노래제목2</li>
-      <li data-song="3">노래제목3</li>
+      <li data-song="1">HAPPY- DAY6</li>
+      <li data-song="2">너에게 닿기를 - 10CM</li>
+      <li data-song="3">APT- ROSE</li>
     </ul>
   `;
 

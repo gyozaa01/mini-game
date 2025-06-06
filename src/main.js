@@ -21,7 +21,7 @@ const songSelectScreen = createSongSelectScreen(
   }
 );
 
-const rhythmScreen = createRhythmGameScreen();
+let rhythmScreen = null;
 
 function router() {
   const rawHash = location.hash.replace(/^#/, "");
@@ -55,7 +55,7 @@ function router() {
   if (rawHash.startsWith("/rhythm/")) {
     const parts = rawHash.split("/");
     const songId = parts[2];
-
+    rhythmScreen = createRhythmGameScreen(songId);
     app.appendChild(rhythmScreen);
     return;
   }

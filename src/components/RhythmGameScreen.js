@@ -1,6 +1,38 @@
-export function createRhythmGameScreen() {
+export function createRhythmGameScreen(songId) {
   const container = document.createElement("div");
   container.id = "rhythm-game";
+
+  const iframes = {
+    1: `<iframe
+          width="250"
+          height="200"
+          src="https://www.youtube.com/embed/2o1zdX72400?si=mGgef8wshRodKR1d&autoplay=1&mute=0&controls=1"
+          title="YouTube video player"
+          frameborder="0"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          allowfullscreen
+        ></iframe>`,
+    2: `<iframe
+          width="250"
+          height="200"
+          src="https://www.youtube.com/embed/Ry1RrIVyl1M?si=iDN5ajaYht6yujzQ&autoplay=1&mute=0&controls=1"
+          title="YouTube video player"
+          frameborder="0"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          allowfullscreen
+        ></iframe>`,
+    3: `<iframe
+          width="250"
+          height="200"
+          src="https://www.youtube.com/embed/8Ebqe2Dbzls?si=Scuf-6vYFuTbOUzf&autoplay=1&mute=0&controls=1"
+          title="YouTube video player"
+          frameborder="0"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          allowfullscreen
+        ></iframe>`,
+  };
+
+  const iframeHTML = iframes[songId] || "";
 
   container.innerHTML = `
     <div id="game-frame">
@@ -12,8 +44,11 @@ export function createRhythmGameScreen() {
             <div>점수</div>
             <div class="score-value">0</div>
           </div>
-          <div class="info-box" id="pause-box">
+          <div class="info-box" id="i-frame-box">
             <div>노래</div>
+            <div class="iframe-container">
+              ${iframeHTML}
+            </div>
           </div>
         </div>
 
