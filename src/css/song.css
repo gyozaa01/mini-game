@@ -1,0 +1,29 @@
+#song-select-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  text-align: center;
+}
+
+.song-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.song-list li {
+  font-size: 50px;
+  margin: 15% 0;
+  color: white;
+  position: relative;
+  padding-left: 40px;
+}
+
+.song-list li:hover::before {
+  content: "->";
+  position: absolute;
+  left: -30px;
+  color: white;
+}

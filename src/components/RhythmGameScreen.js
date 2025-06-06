@@ -13,7 +13,7 @@ export function createRhythmGameScreen() {
             <div class="score-value">0</div>
           </div>
           <div class="info-box" id="pause-box">
-            <div>일시정지</div>
+            <div>노래</div>
           </div>
         </div>
 

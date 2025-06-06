@@ -5,7 +5,7 @@ export function createModeScreen() {
     <div class="title">GAME MODE</div>
     <ul class="mode-list">
       <li data-hash="/suika" class="selected">수박게임</li>
-      <li data-hash="/rhythm">리듬게임</li>
+      <li data-hash="/song">리듬게임</li>
       <li data-hash="/tetris">테트리스</li>
     </ul>
   `;
