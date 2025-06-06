@@ -1,0 +1,135 @@
+#rhythm-game {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  gap: 32px;
+  color: white;
+}
+
+.rhythm-left {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  width: 45%;
+  height: 100%;
+  box-sizing: border-box;
+}
+
+.rhythm-right {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 55%;
+  height: 100%;
+}
+
+.rhythm-header {
+  font-size: 60px;
+  margin-bottom: 16px;
+  color: #fee300;
+  text-shadow: -3px -3px #f98628, 3px -3px #f98628, -3px 3px #f98628,
+    3px 3px #f98628;
+}
+
+.rhythm-top {
+  display: flex;
+  gap: 16px;
+  width: 100%;
+  margin-bottom: 16px;
+}
+
+.rhythm-top .info-box {
+  flex: 1;
+}
+
+.info-box {
+  border: 10px solid #046db3;
+  background-color: #0a111b;
+  padding: 16px;
+  min-height: 80px;
+  font-size: 20px;
+  border-radius: 8px;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+#score-box > div:first-child {
+  margin-bottom: 4px;
+}
+.score-value {
+  font-size: 24px;
+  font-weight: bold;
+}
+
+#rule-box {
+  width: 100%;
+  min-height: 160px;
+}
+
+.rule-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-top: 16px;
+  gap: 20%;
+}
+
+.rule-desc {
+  font-size: 14px;
+  margin-left: 24px;
+  color: white;
+}
+
+.rule-desc ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  text-align: left;
+}
+
+.rule-desc li {
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+
+#rhythm-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+#lane-container {
+  display: flex;
+  width: 420px;
+  height: 500px;
+  border: 10px solid #046db3;
+  background-color: #0a111b;
+  box-sizing: border-box;
+  position: relative;
+  overflow: hidden;
+}
+
+.lane {
+  flex: 1;
+  border-left: 2px solid #046db3;
+  border-right: 2px solid #046db3;
+  position: relative;
+  overflow: hidden;
+}
+
+.lane:first-child {
+  border-left: none;
+}
+.lane:last-child {
+  border-right: none;
+}
+
+.lane-labels {
+  display: flex;
+  justify-content: space-around;
+  width: 420px;
+  margin-top: 8px;
+  font-size: 24px;
+  color: #fff;
+}

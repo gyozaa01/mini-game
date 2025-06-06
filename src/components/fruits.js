@@ -1,10 +1,3 @@
-// src/components/fruits.js
-
-/**
- * FRUITS_BASE: 수박게임에서 사용할 기본 과일 데이터
- *   name: 실제 public/suika/ 폴더 내 PNG 파일 이름(확장자 제외)
- *   radius: Matter.js Body.circle 생성 시 사용할 반지름(px)
- */
 export const FRUITS_BASE = [
   { name: "00_cherry", radius: 33 / 2 }, // radius = 16.5
   { name: "01_strawberry", radius: 48 / 2 }, // radius = 24
