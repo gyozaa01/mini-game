@@ -1,3 +1,5 @@
+import { Engine, Render, Runner, World, Bodies, Events } from "matter-js";
+
 export function createRhythmGameScreen(songId) {
   const container = document.createElement("div");
   container.id = "rhythm-game";
@@ -32,7 +34,8 @@ export function createRhythmGameScreen(songId) {
         ></iframe>`,
   };
 
-  const iframeHTML = iframes[songId] || "";
+  const iframeHTML =
+    iframes[songId] || `<div class="no-song">재생할 곡이 없습니다.</div>`;
 
   container.innerHTML = `
     <div id="game-frame">
@@ -67,11 +70,14 @@ export function createRhythmGameScreen(songId) {
       <div class="rhythm-right">
         <div id="rhythm-area">
           <div id="lane-container">
-            <div class="lane" data-key="A"></div>
-            <div class="lane" data-key="S"></div>
-            <div class="lane" data-key="D"></div>
-            <div class="lane" data-key="F"></div>
+            <canvas id="rhythm-canvas"></canvas>
+
+            <div class="lane lane-A" data-key="A"></div>
+            <div class="lane lane-S" data-key="S"></div>
+            <div class="lane lane-D" data-key="D"></div>
+            <div class="lane lane-F" data-key="F"></div>
           </div>
+          
           <div class="lane-labels">
             <span>A</span><span>S</span><span>D</span><span>F</span>
           </div>
@@ -79,6 +85,99 @@ export function createRhythmGameScreen(songId) {
       </div>
     </div>
   `;
+
+  const chartUrl = `/src/notes/song${songId}.json`;
+  let noteChart = null;
+  fetch(chartUrl)
+    .then((res) => {
+      if (!res.ok) {
+        throw new Error(`차트 파일을 불러올 수 없습니다: ${chartUrl}`);
+      }
+      return res.json();
+    })
+    .then((json) => {
+      noteChart = json;
+      startGameLoop();
+    })
+    .catch((err) => {
+      console.error(err);
+    });
+
+  const canvas = container.querySelector("#rhythm-canvas");
+  canvas.width = 400;
+  canvas.height = 480;
+
+  canvas.style.position = "absolute";
+  canvas.style.top = "10px";
+  canvas.style.left = "10px";
+
+  const engine = Engine.create();
+  engine.positionIterations = 10;
+  engine.velocityIterations = 10;
+
+  const render = Render.create({
+    engine,
+    canvas: canvas,
+    options: {
+      wireframes: false,
+      width: 400, // 내부 너비
+      height: 480, // 내부 높이
+      background: "transparent",
+    },
+  });
+
+  const world = engine.world;
+  Render.run(render);
+  Runner.run(Runner.create(), engine);
+
+  let audioStartTime = null;
+  function startGameLoop() {
+    audioStartTime = performance.now() / 1000;
+    function loop() {
+      const elapsed = performance.now() / 1000 - audioStartTime;
+      if (noteChart && Array.isArray(noteChart.notes)) {
+        noteChart.notes.forEach((note) => {
+          if (!note.spawned && elapsed >= note.time) {
+            spawnNoteInLane(note.lane);
+            note.spawned = true;
+          }
+        });
+      }
+      requestAnimationFrame(loop);
+    }
+    loop();
+  }
+
+  function spawnNoteInLane(lane) {
+    const laneWidth = 100;
+    const laneCenters = {
+      A: laneWidth * 0.4,
+      S: laneWidth * 1.4,
+      D: laneWidth * 2.4,
+      F: laneWidth * 3.4,
+    };
+    const x = laneCenters[lane] || laneCenters.A;
+    const y = -20;
+
+    const noteBody = Bodies.rectangle(x, y, 80, 20, {
+      isSensor: true,
+      label: "note",
+      render: {
+        fillStyle: "#3498db",
+        strokeStyle: "#2980b9",
+        lineWidth: 3,
+      },
+    });
+    World.add(world, noteBody);
+  }
+
+  Events.on(engine, "afterUpdate", () => {
+    world.bodies.forEach((body) => {
+      if (body.label === "note" && body.position.y > 500) {
+        World.remove(world, body);
+      }
+    });
+  });
 
   return container;
 }
